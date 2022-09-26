@@ -31,7 +31,7 @@ export class CategoryService {
       return await categoryCreated.save();
     } catch (error) {
       this.logger.error(`error: ${JSON.stringify(error.message)}`);
-      throw new RpcException(error.message);
+      throw new RpcException({ statusCode: 400, message: error.message });
     }
   }
 
@@ -42,14 +42,29 @@ export class CategoryService {
 
   async findOne(name: string) {
     const category = await this.categoryModel.findOne({ name });
+    if (!category) {
+      throw new RpcException({
+        statusCode: 404,
+        message: `Category '${name}' not found.`,
+      });
+    }
     return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${updateCategoryDto._id} category`;
+  async update(_id: string, updateCategoryDto: UpdateCategoryDto) {
+    try {
+      await this.categoryModel.findOneAndUpdate(
+        { _id },
+        { $set: updateCategoryDto },
+      );
+    } catch (error) {
+      this.logger.error(`error: ${JSON.stringify(error.message)}`);
+      throw new RpcException({ statusCode: 400, message: error.message });
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: number) {
+    console.log(`Delete: ${id}`);
+    return;
   }
 }
