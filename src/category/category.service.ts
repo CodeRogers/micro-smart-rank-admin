@@ -21,14 +21,17 @@ export class CategoryService {
 
     if (categoryFound) {
       this.logger.error(`Fail to create category, already exists`);
-      throw new RpcException(`Category ${name} already exists`);
+      throw new RpcException({
+        statusCode: 400,
+        message: `Category ${name} already exists`,
+      });
     }
 
     const category = new this.categoryModel(createCategoryDto);
 
     try {
-      const categoryCreated = new this.categoryModel(category);
-      return await categoryCreated.save();
+      const categoryCreated = await category.save();
+      return categoryCreated;
     } catch (error) {
       this.logger.error(`error: ${JSON.stringify(error.message)}`);
       throw new RpcException({ statusCode: 400, message: error.message });
@@ -40,7 +43,7 @@ export class CategoryService {
     return categories;
   }
 
-  async findOne(name: string) {
+  async findOne(name: string): Promise<Category> {
     const category = await this.categoryModel.findOne({ name });
     if (!category) {
       throw new RpcException({
@@ -51,7 +54,10 @@ export class CategoryService {
     return category;
   }
 
-  async update(_id: string, updateCategoryDto: UpdateCategoryDto) {
+  async update(
+    _id: string,
+    updateCategoryDto: UpdateCategoryDto,
+  ): Promise<void> {
     try {
       await this.categoryModel.findOneAndUpdate(
         { _id },
@@ -63,8 +69,13 @@ export class CategoryService {
     }
   }
 
-  async remove(id: number) {
-    console.log(`Delete: ${id}`);
+  async remove(name: string): Promise<void> {
+    try {
+      await this.categoryModel.findOneAndDelete({ name });
+    } catch (error) {
+      this.logger.error(`error: ${JSON.stringify(error.message)}`);
+      throw new RpcException({ statusCode: 400, message: error.message });
+    }
     return;
   }
 }

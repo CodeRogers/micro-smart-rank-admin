@@ -31,34 +31,68 @@ export class CategoryController {
       await channel.ack(originalMsg);
     } catch (error) {
       this.logger.error(`erro: ${JSON.stringify(error)}`);
-      ackErrors.map(async (ackError) => {
-        if (error.message.includes(ackError)) await channel.ack(originalMsg);
+
+      const filterackErrors = ackErrors.filter((ackError) => {
+        error.message.includes(ackError);
       });
+      if (filterackErrors.length > 0) await channel.ack(originalMsg);
     }
   }
 
   @MessagePattern('findAllCategory')
-  async findAll(@Payload() name: string): Promise<Category | Category[]> {
-    return name
-      ? await this.categoryService.findOne(name)
-      : await this.categoryService.findAll();
-  }
-
-  @MessagePattern('findOneCategory')
-  async findOne(@Payload() _id: string): Promise<Category> {
-    return await this.categoryService.findOne(_id);
+  async findAll(
+    @Payload() name: string,
+    @Ctx() context: RmqContext,
+  ): Promise<Category | Category[]> {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    try {
+      return name
+        ? await this.categoryService.findOne(name)
+        : await this.categoryService.findAll();
+    } finally {
+      await channel.ack(originalMsg);
+    }
   }
 
   @MessagePattern('updateCategory')
   async update(
     @Payload('_id') _id: string,
     @Payload('updateCategoryDto') updateCategoryDto: UpdateCategoryDto,
+    @Ctx() context: RmqContext,
   ): Promise<void> {
-    return await this.categoryService.update(_id, updateCategoryDto);
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    try {
+      await this.categoryService.update(_id, updateCategoryDto);
+      await channel.ack(originalMsg);
+    } catch (error) {
+      this.logger.error(`erro: ${JSON.stringify(error)}`);
+
+      const filterAckErrors = ackErrors.filter((ackError) =>
+        error.message.includes(ackError),
+      );
+      if (filterAckErrors.length > 0) await channel.ack(originalMsg);
+    }
   }
 
-  @MessagePattern('removeCategory')
-  remove(@Payload() id: number): Promise<void> {
-    return this.categoryService.remove(id);
+  @MessagePattern('deleteCategory')
+  async remove(
+    @Payload() name: string,
+    @Ctx() context: RmqContext,
+  ): Promise<void> {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+    try {
+      await this.categoryService.remove(name);
+      await channel.ack(originalMsg);
+    } catch (error) {
+      this.logger.error(`erro: ${JSON.stringify(error)}`);
+
+      const filterAckErrors = ackErrors.filter((ackError) =>
+        error.message.includes(ackError),
+      );
+      if (filterAckErrors.length > 0) await channel.ack(originalMsg);
+    }
   }
 }
