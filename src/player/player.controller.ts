@@ -1,35 +1,38 @@
-import { Controller } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PlayerService } from './player.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
+import { Player } from './schemas/player.schema';
 
 @Controller()
 export class PlayerController {
   constructor(private readonly playerService: PlayerService) {}
 
   @MessagePattern('createPlayer')
-  create(@Payload() createPlayerDto: CreatePlayerDto) {
-    return this.playerService.create(createPlayerDto);
+  async create(@Payload() createPlayerDto: CreatePlayerDto) {
+    return await this.playerService.create(createPlayerDto);
   }
 
   @MessagePattern('findAllPlayer')
-  findAll() {
-    return this.playerService.findAll();
-  }
-
-  @MessagePattern('findOnePlayer')
-  findOne(@Payload() id: number) {
-    return this.playerService.findOne(id);
+  async findAll(@Payload() _id: string): Promise<Player | Player[]> {
+    return _id
+      ? await this.playerService.findOne(_id)
+      : await this.playerService.findAll();
   }
 
   @MessagePattern('updatePlayer')
-  update(@Payload() updatePlayerDto: UpdatePlayerDto) {
-    return this.playerService.update(updatePlayerDto.id, updatePlayerDto);
+  @HttpCode(HttpStatus.NO_CONTENT || 204)
+  async update(
+    @Payload('_id') _id: string,
+    @Payload('updatePlayerDto') updatePlayerDto: UpdatePlayerDto,
+  ) {
+    return await this.playerService.update(_id, updatePlayerDto);
   }
 
   @MessagePattern('removePlayer')
-  remove(@Payload() id: number) {
-    return this.playerService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT || 204)
+  async remove(@Payload() _id: string) {
+    return await this.playerService.remove(_id);
   }
 }
