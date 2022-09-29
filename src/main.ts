@@ -8,6 +8,7 @@ async function bootstrap() {
     transport: Transport.RMQ,
     options: {
       urls: [process.env.MQCONNECTION],
+      noAck: false,
       queue: process.env.QUEUE,
     },
   });
