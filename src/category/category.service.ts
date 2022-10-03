@@ -13,7 +13,7 @@ export class CategoryService {
     private readonly categoryModel: Model<CategoryDocument>,
   ) {}
 
-  private readonly logger = new Logger(Category.name);
+  private readonly logger = new Logger(CategoryService.name);
 
   async create(createCategoryDto: CreateCategoryDto) {
     const { name } = createCategoryDto;
@@ -46,6 +46,7 @@ export class CategoryService {
   async findOne(name: string): Promise<Category> {
     const category = await this.categoryModel.findOne({ name });
     if (!category) {
+      this.logger.error(`Category ${name} not found`);
       throw new RpcException({
         statusCode: 404,
         message: `Category '${name}' not found.`,
@@ -59,23 +60,23 @@ export class CategoryService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<void> {
     try {
-      await this.categoryModel.findOneAndUpdate(
-        { _id },
-        { $set: updateCategoryDto },
-      );
+      await this.findOne(updateCategoryDto.name);
     } catch (error) {
-      this.logger.error(`error: ${JSON.stringify(error.message)}`);
       throw new RpcException({ statusCode: 400, message: error.message });
     }
+    await this.categoryModel.findOneAndUpdate(
+      { _id },
+      { $set: updateCategoryDto },
+    );
   }
 
   async remove(name: string): Promise<void> {
     try {
-      await this.categoryModel.findOneAndDelete({ name });
+      await this.findOne(name);
     } catch (error) {
       this.logger.error(`error: ${JSON.stringify(error.message)}`);
       throw new RpcException({ statusCode: 400, message: error.message });
     }
-    return;
+    await this.categoryModel.findOneAndDelete({ name });
   }
 }

@@ -35,7 +35,8 @@ export class CategoryController {
       const filterackErrors = ackErrors.filter((ackError) => {
         error.message.includes(ackError);
       });
-      if (filterackErrors.length > 0) await channel.ack(originalMsg);
+      if (filterackErrors.length > 0 || error.error.statusCode === 400)
+        await channel.ack(originalMsg);
     }
   }
 
@@ -72,7 +73,8 @@ export class CategoryController {
       const filterAckErrors = ackErrors.filter((ackError) =>
         error.message.includes(ackError),
       );
-      if (filterAckErrors.length > 0) await channel.ack(originalMsg);
+      if (filterAckErrors.length > 0 || error.error.statusCode === 400)
+        await channel.ack(originalMsg);
     }
   }
 
@@ -92,7 +94,8 @@ export class CategoryController {
       const filterAckErrors = ackErrors.filter((ackError) =>
         error.message.includes(ackError),
       );
-      if (filterAckErrors.length > 0) await channel.ack(originalMsg);
+      if (filterAckErrors.length > 0 || error.error.statusCode === 400)
+        await channel.ack(originalMsg);
     }
   }
 }

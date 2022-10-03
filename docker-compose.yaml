@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  nest-api-microservices:
+    container_name: smart-rank-microservices
+    image: nest-micro:1.0.0
+    build:
+      context: .
+      target: development
+    restart: unless-stopped
+    command: npm run start:dev
+    env_file:
+      - .env
+    volumes:
+      - .:/home/node/src/app/
+      - /home/node/src/app/node_modules
